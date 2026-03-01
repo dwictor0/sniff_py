@@ -36,8 +36,10 @@ class ServiceDetector:
             banner = ""
             try:
                 banner = sock.recv(1024).decode(errors="ignore").strip()
-            except:
-                banner = ""
+            except Exception as e:
+                print(f"[ERROR] {host}: {e}")
+                return {"host": host, "status": "ERROR", "latency": None}
+                
 
             sock.close()
 
