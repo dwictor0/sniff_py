@@ -39,7 +39,6 @@ class ServiceDetector:
             except Exception as e:
                 print(f"[ERROR] {host}: {e}")
                 return {"host": host, "status": "ERROR", "latency": None}
-                
 
             sock.close()
 
