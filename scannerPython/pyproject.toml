@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyscan-network-scanner"
+version = "0.1.0"
+description = "Modular network scanner inspired by Nmap"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Daniel Wictor", email = "daniel.wdev0@gmail.com" },
+    { name = "Olavo Regis", email = "olavoregisdev@gmail.com" }
+]
+
+keywords = ["network", "scanner", "security", "nmap", "cli"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: POSIX :: Linux",
+    "License :: OSI Approved :: Adicionar o nome da license depois",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: System :: Networking"
+]
+
+dependencies = []
+
+[project.scripts]
+pyscan = "pyscan.cli:main"

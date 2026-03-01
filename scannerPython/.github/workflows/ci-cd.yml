@@ -1,0 +1,93 @@
+name: scannerPython CI/CD
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  # release:
+  #   types: [created]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest flake8 black bandit build
+
+      - name: Check formatting
+        run: black --check .
+
+      - name: Lint
+        run: flake8 .
+
+      - name: Security check
+        run: bandit -r pyscan/
+
+      - name: Run tests
+        run: |
+          if [ -d "tests" ]; then
+            pytest
+          else
+            echo "No tests directory found. Skipping tests."
+          fi
+
+      - name: Build package
+        run: python -m build
+
+  # ---------------------------------------------------
+  # PUBLICAÇÃO AUTOMÁTICA NO PYPI (DESATIVADA)
+  # Para ativar:
+  # 1) Descomente o bloco "release" no topo
+  # 2) Descomente o job abaixo
+  # 3) Configure o secret PYPI_API_TOKEN
+  # ---------------------------------------------------
+
+  # publish:
+  #   needs: test
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'release'
+  #
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.11"
+  #
+  #     - name: Install build tools
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install build twine
+  #
+  #     - name: Build
+  #       run: python -m build
+  #
+  #     - name: Publish to PyPI
+  #       env:
+  #         TWINE_USERNAME: __token__
+  #         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+  #       run: twine upload dist/*
