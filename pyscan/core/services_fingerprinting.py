@@ -1,8 +1,9 @@
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+
 # =========================
-# Service Detection 
+# Service Detection
 # =========================
 class ServiceDetector:
     def __init__(self, timeout=2):
@@ -19,7 +20,7 @@ class ServiceDetector:
             143: "IMAP",
             443: "HTTPS",
             3306: "MYSQL",
-            3389: "RDP"
+            3389: "RDP",
         }
 
     def detect_service(self, host, port):
@@ -45,11 +46,7 @@ class ServiceDetector:
             if not service:
                 service = self.default_ports.get(port, "UNKNOWN")
 
-            return {
-                "port": port,
-                "status": "OPEN",
-                "service": service
-            }
+            return {"port": port, "status": "OPEN", "service": service}
 
         except (socket.timeout, ConnectionRefusedError):
             return {"port": port, "status": "CLOSED"}
@@ -93,7 +90,7 @@ class ServiceFingerprintScanner:
         Se ports for None -> escaneia portas padrão (1-1024)
         """
         if ports is None:
-            ports = range(1, 1025)  
+            ports = range(1, 1025)
 
         open_ports = []
 

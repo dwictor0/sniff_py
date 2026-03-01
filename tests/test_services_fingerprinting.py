@@ -1,6 +1,7 @@
 from unittest.mock import patch, MagicMock
 from pyscan.core.services_fingerprinting import ServiceDetector
 
+
 def test_detect_service_open_ssh():
     detector = ServiceDetector(timeout=1)
 
@@ -35,10 +36,10 @@ def test_detect_service_fallback_port():
     with patch("socket.socket") as mock_socket:
         instance = MagicMock()
         instance.connect.return_value = None
-        instance.recv.return_value = b""  
+        instance.recv.return_value = b""
         mock_socket.return_value = instance
 
         result = detector.detect_service("127.0.0.1", 80)
 
         assert result["status"] == "OPEN"
-        assert result["service"] == "HTTP"  
+        assert result["service"] == "HTTP"
