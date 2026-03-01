@@ -21,7 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Operating System :: POSIX :: Linux",
-    "License :: OSI Approved :: Adicionar o nome da license depois",
+    "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
     "Topic :: Security",
     "Topic :: System :: Networking"
@@ -31,3 +31,19 @@ dependencies = []
 
 [project.scripts]
 pyscan = "pyscan.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyscan*"]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "venv",
+    ".venv",
+    "build",
+    "dist"
+]
