@@ -1,7 +1,6 @@
 import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-
 # =========================
 # Service Detection 
 # =========================
