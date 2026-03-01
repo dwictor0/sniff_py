@@ -1,7 +1,6 @@
 from unittest.mock import patch, MagicMock
 from pyscan.core.services_fingerprinting import ServiceDetector
 
-
 def test_detect_service_open_ssh():
     detector = ServiceDetector(timeout=1)
 
