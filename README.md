@@ -92,7 +92,6 @@ Criar um scanner de rede modular, orientado a objetos e executável via linha de
 - Tratamento robusto de exceções
 - Sistema de logs detalhados
 - Execução com privilégios opcionais (raw sockets)
-- Idioma oficial do código (Ingles)
 
 ---
 
