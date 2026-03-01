@@ -1,101 +1,114 @@
 # scannerPython
 
-Projeto de scanner de rede em Python inspirado no Nmap.
+> Ferramenta de scanner de rede inspirada no Nmap para descoberta de hosts, análise de portas e identificação de serviços.
+> 
+> Desenvolvedores:
+>
+>  - Daniel Wictor 
+>  - Olavo Regis   
 
-O objetivo é desenvolver uma ferramenta capaz de:
-
-- Descobrir hosts ativos
-- Escanear portas
-- Identificar serviços
-- Detectar versões básicas
-- Gerar relatórios
 
 ---
 
-# Objetivo do Projeto
+## Pacotes
 
-Criar um scanner de rede modular, orientado a objetos e executável via linha de comando (CLI), com funcionalidades semelhantes ao Nmap.
-
----
-
-# Requisitos Funcionais (RF)
-
-## RF01 – Descoberta de Hosts
-
-- ICMP Scan (Ping Sweep)
-- TCP SYN Scan básico
-- ARP Scan (rede local)
+- **Python 3.10+**  
+- `socket`  
+- `asyncio`  
+- `concurrent.futures`  
+- `argparse`  
+- `ipaddress`  
+- `json`  
+- `re`  
+- `logging`  
 
 ---
 
-## RF02 – Port Scanning
+## Guia de Instalacao
 
-- TCP Connect Scan
-- TCP SYN Scan
-- Scan de portas específicas
-- Scan por range (ex: 1–1024)
-- Scan de top ports (ex: 100 portas mais comuns)
+Siga os passos abaixo para rodar o scanner localmente:
+
+1. **Clone o repositório**:
+    ```bash
+    git clone https://github.com/seu-usuario/scannerPython.git
+    cd scannerPython
+    ```
+
+2. **Crie o ambiente virtual**:
+    ```bash
+    python3 -m venv venv
+    ```
+
+3. **Ative o ambiente virtual**:
+
+   - No **Linux/macOS**:
+     ```bash
+     source venv/bin/activate
+     ```
+   - No **Windows**:
+     ```bash
+     venv\Scripts\activate
+     ```
+
+4. **Instale as dependências**:
+    ```bash
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    ```
+
+5. **Execute a ferramenta via CLI**:
+    ```bash
+    python main.py --help
+    ```
+
 
 ---
 
-## RF03 – Detecção de Serviços
+## Funcionalidades
 
-- Banner Grabbing
-- Identificação por resposta padrão
-- Identificação básica de protocolo:
+### 1. Descoberta de Hosts
+- **ICMP Ping Sweep** para detectar hosts ativos.  
+- **TCP SYN Scan** básico para identificar hosts respondendo em portas específicas.  
+- **ARP Scan** para rede local (LAN).
+
+### 2. Port Scanning
+- **TCP Connect Scan**  
+- **TCP SYN Scan**  
+- Scan de portas específicas ou por **range** (ex: 1–1024)  
+- Scan das **top 100 portas mais comuns**  
+
+### 3. Detecção de Serviços
+- **Banner Grabbing**  
+- Identificação de protocolos comuns:
   - HTTP
   - FTP
   - SSH
   - SMTP
 
----
+### 4. Detecção de Versão
+- Extração de versão via banner  
+- Uso de **regex** para identificar versões conhecidas
 
-## RF04 – Detecção de Versão (Simplificada)
+### 5. Modos de Execução
+- **Rápido:** varredura básica e ágil  
+- **Completo:** varredura profunda  
+- **Customizado:** escolha de hosts, portas e protocolos  
+- **Stealth:** envio de pacotes discretos
 
-- Extração de versão via banner
-- Uso de Regex para identificar versões conhecidas
+### 6. Geração de Relatórios
+- Saída formatada no terminal  
+- Exportação em **JSON** e **TXT**  
+- Opção de salvar relatório em arquivo local
 
----
-
-## RF05 – Modos de Execução
-
-- Modo rápido
-- Modo completo
-- Scan customizado via argumentos CLI
-- Modo Stealth
-
----
-
-## RF06 – Geração de Relatórios
-
-- Output formatado no terminal
-- Exportação em JSON
-- Exportação em TXT
-- Opção de salvar relatório em arquivo
+### 7. Controle de Performance
+- Timeout configurável  
+- Número de threads configurável  
+- Delay entre envio de pacotes  
 
 ---
 
-## RF07 – Controle de Performance
+## Arquitetura do Projeto
 
-- Timeout configurável
-- Número de threads configurável
-- Delay entre envio de pacotes
-
----
-
-# Requisitos Não Funcionais (RNF)
-
-- Código modular
-- CLI amigável (`argparse` ou `typer`)
-- Execução em Linux
-- Estrutura orientada a objetos
-- Tratamento robusto de exceções
-- Sistema de logs detalhados
-- Execução com privilégios opcionais (raw sockets)
-
----
-
-# Arquitetura do Projeto
 ```bash
 pyscan/
 │
@@ -111,19 +124,4 @@ pyscan/
 │
 ├── cli.py
 ├── main.py
-└── requirements.txt  
-```
-
-# Pacotes Utilizados
-- socket
-- asyncio
-- concurrent.futures
-- argparse
-- ipaddress
-- json
-- re
-- logging
-# Aviso Legal
-
-Esta ferramenta deve ser utilizada apenas em ambientes autorizados.  
-O uso indevido pode violar leis locais e internacionais.
+└── requirements.txt
