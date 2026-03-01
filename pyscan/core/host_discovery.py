@@ -40,18 +40,12 @@ class IcmpScanner:
     def icmpPing(self, host):
         try:
             pkt = (
-                scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-                / scapy.IP(dst=host)
-                / scapy.ICMP()
+                scapy.Ether(dst="ff:ff:ff:ff:ff:ff") / scapy.IP(dst=host) / scapy.ICMP()
             )
             ans, _ = scapy.srp(pkt, timeout=self.timeout, verbose=False)
             if ans:
                 latency = 1000 * (ans[0][1].time - ans[0][0].sent_time)
-                return {
-                    "host": host,
-                    "status": "UP",
-                    "latency": round(latency, 2)
-                }
+                return {"host": host, "status": "UP", "latency": round(latency, 2)}
             else:
                 return {"host": host, "status": "DOWN", "latency": None}
         except Exception as e:
@@ -130,8 +124,7 @@ class HostDiscovery:
                 start_int = int(ipaddress.IPv4Address(start_ip))
                 end_int = int(ipaddress.IPv4Address(end_ip))
                 hosts = [
-                    str(ipaddress.IPv4Address(i))
-                    for i in range(start_int, end_int + 1)
+                    str(ipaddress.IPv4Address(i)) for i in range(start_int, end_int + 1)
                 ]
             elif "/" in host_input:
                 net = ipaddress.IPv4Network(host_input, strict=False)
