@@ -40,7 +40,9 @@ class IcmpScanner:
     def icmpPing(self, host):
         try:
             pkt = (
-                scapy.Ether(dst="ff:ff:ff:ff:ff:ff") / scapy.IP(dst=host) / scapy.ICMP()
+                scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+                / scapy.IP(dst=host)
+                / scapy.ICMP()
             )
             ans, _ = scapy.srp(pkt, timeout=self.timeout, verbose=False)
             if ans:
