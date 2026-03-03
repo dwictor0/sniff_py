@@ -9,15 +9,39 @@ import scapy.all as scapy
 # TCP Scanner
 # =========================
 class TcpScanner:
+    """
+    Realiza verificação de disponibilidade de host via conexão TCP.
+    """
+
     def __init__(self, timeout=2):
+        """
+        Inicializa o scanner TCP.
+
+        Args:
+            timeout (int | float): Tempo máximo de espera em segundos.
+        """
         self.timeout = timeout
 
     def tcpSyn(self, host, port=80):
+        """
+        Verifica se um host está ativo tentando estabelecer conexão TCP.
+
+        Args:
+            host (str): Endereço IP ou hostname do alvo.
+            port (int): Porta TCP a ser testada.
+
+        Returns:
+            dict: Resultado contendo:
+                - host (str)
+                - status (str): UP, DOWN ou ERROR
+                - latency (float | None): Latência em ms
+        """
         try:
             start = time.time()
             with socket.create_connection((host, port), timeout=self.timeout):
                 pass
             latency = 1000 * (time.time() - start)
+
             return {"host": host, "status": "UP", "latency": round(latency, 2)}
 
         except (socket.timeout, ConnectionRefusedError):
@@ -35,12 +59,35 @@ class TcpScanner:
 # ICMP Scanner
 # =========================
 class IcmpScanner:
+    """
+    Realiza descoberta de host via ICMP Echo Request (ping).
+    """
+
     def __init__(self, timeout=2):
+        """
+        Inicializa o scanner ICMP.
+
+        Args:
+            timeout (int | float): Tempo máximo de espera em segundos.
+        """
         self.timeout = timeout
 
     def icmpPing(self, host):
+        """
+        Envia um ICMP Echo Request para verificar disponibilidade do host.
+
+        Args:
+            host (str): Endereço IP alvo.
+
+        Returns:
+            dict: Resultado contendo:
+                - host (str)
+                - status (str): UP, DOWN ou ERROR
+                - latency (float | None): Latência em ms
+        """
         try:
             pkt = scapy.IP(dst=host) / scapy.ICMP()
+
             start = time.time()
             ans, _ = scapy.sr(pkt, timeout=self.timeout, verbose=False)
             latency = 1000 * (time.time() - start)
@@ -63,9 +110,19 @@ class IcmpScanner:
 # ARP Scanner
 # =========================
 class ArpScanner:
-    """ARP scan restrito à mesma subnet da interface ativa"""
+    """
+    Realiza varredura ARP restrita à mesma subnet da interface ativa.
+    """
 
     def __init__(self, timeout=1, iface=None):
+        """
+        Inicializa o scanner ARP.
+
+        Args:
+            timeout (int | float): Tempo máximo de espera em segundos.
+            iface (str | None): Interface de rede a ser utilizada.
+                                 Se None, utiliza a interface padrão do Scapy.
+        """
         self.timeout = timeout
         self.iface = iface or scapy.conf.iface
 
@@ -77,6 +134,22 @@ class ArpScanner:
         )
 
     def arpBroadcast(self, host):
+        """
+        Executa varredura ARP para um IP ou rede CIDR.
+
+        Args:
+            host (str): IP único ou rede no formato CIDR (ex: 192.168.1.0/24).
+
+        Returns:
+            list[dict]: Lista contendo:
+                - host (str)
+                - status (str): UP, DOWN ou ERROR
+                - latency (float | None)
+                - mac (str, opcional)
+
+        Raises:
+            ValueError: Se o host não pertencer à mesma rede local.
+        """
         try:
             if "/" in host:
                 target_net = ipaddress.IPv4Network(host, strict=False)
@@ -136,7 +209,20 @@ class ArpScanner:
 # Host Discovery
 # =========================
 class HostDiscovery:
+    """
+    Classe principal responsável por coordenar a descoberta de hosts
+    utilizando diferentes métodos (ICMP, TCP ou ARP).
+    """
+
     def __init__(self, timeout=2, threads=50, tcp_port=80):
+        """
+        Inicializa o mecanismo de descoberta.
+
+        Args:
+            timeout (int | float): Timeout padrão para scanners.
+            threads (int): Número máximo de threads simultâneas.
+            tcp_port (int): Porta padrão usada no método TCP.
+        """
         self.timeout = timeout
         self.threads = threads
         self.tcp_port = tcp_port
@@ -147,7 +233,18 @@ class HostDiscovery:
 
     @staticmethod
     def parse_hosts(host_input):
-        """Aceita host único, range ou CIDR"""
+        """
+        Interpreta entrada de host único, range ou rede CIDR.
+
+        Args:
+            host_input (str): Entrada fornecida pelo usuário.
+
+        Returns:
+            list[str]: Lista de IPs válidos.
+
+        Raises:
+            ValueError: Se a entrada for inválida.
+        """
         host_input = host_input.strip()
 
         if "-" in host_input:
@@ -168,6 +265,19 @@ class HostDiscovery:
             return [host_input]
 
     def discover(self, host_input, method="icmp"):
+        """
+        Executa a descoberta de hosts utilizando o método especificado.
+
+        Args:
+            host_input (str): Host único, range ou rede CIDR.
+            method (str): Método de varredura ('icmp', 'tcp', 'arp').
+
+        Returns:
+            list[dict]: Lista de resultados contendo status e latência.
+
+        Raises:
+            ValueError: Se método inválido for informado.
+        """
         hosts = self.parse_hosts(host_input)
         results = []
 
