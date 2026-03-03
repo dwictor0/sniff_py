@@ -62,49 +62,67 @@ class IcmpScanner:
 class ArpScanner:
     """ARP scan restrito a redes locais"""
 
-    def __init__(self, timeout=1):
-        self.timeout = timeout
+def __init__(self, timeout=1, iface=None):
+    self.timeout = timeout
+    self.iface = iface or scapy.conf.iface
+    self.local_ip = scapy.get_if_addr(self.iface)
+    self.local_netmask = scapy.get_if_netmask(self.iface)
+    self.local_network = ipaddress.IPv4Network(
+        f"{self.local_ip}/{self.local_netmask}", strict=False
+    )
 
-    def arpBroadcast(self, host):
-        try:
-            ip_obj = (
-                ipaddress.IPv4Address(host.split("/")[0])
-                if "/" in host
-                else ipaddress.IPv4Address(host)
-            )
-            if not (ip_obj.is_private):
+def arpBroadcast(self, host):
+    try:
+        if "/" in host:
+            target_net = ipaddress.IPv4Network(host, strict=False)
+            targets = list(target_net.hosts())
+        else:
+            targets = [ipaddress.IPv4Address(host)]
+
+        for ip in targets:
+            if ip not in self.local_network:
                 raise ValueError(
-                    (
-                        f"ARP só é permitido em redes locais. "
-                        f"Host {host} não permitido."
-                    )
+                    f"Host {ip} não pertence à rede local {self.local_network}"
                 )
 
-            arpRequest = scapy.ARP(pdst=host)
-            broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-            arp_request_broadcast = broadcast / arpRequest
-            answered_list = scapy.srp(
-                arp_request_broadcast, timeout=self.timeout, verbose=False
-            )[0]
+        arp_request = scapy.ARP(pdst=host)
+        broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+        packet = broadcast / arp_request
 
-            if not answered_list:
-                return [{"host": host, "status": "DOWN", "latency": None}]
+        answered, _ = scapy.srp(
+            packet,
+            timeout=self.timeout,
+            iface=self.iface,
+            verbose=False,
+        )
 
-            client_list = []
-            for element in answered_list:
-                latency = 1000 * (element[1].time - element[0].sent_time)
-                client_list.append(
-                    {
-                        "host": element[1].psrc,
-                        "status": "UP",
-                        "latency": round(latency, 2),
-                        "mac": element[1].hwsrc,
-                    }
+        if not answered:
+            return [{"host": str(ip), "status": "DOWN", "latency": None} for ip in targets]
+
+        client_list = []
+
+        for sent, received in answered:
+            latency = None
+
+            if hasattr(sent, "sent_time") and hasattr(received, "time"):
+                latency = round(
+                    1000 * (received.time - sent.sent_time), 2
                 )
-            return client_list
-        except Exception as e:
-            print(f"[ERRO ARP] {host}: {e}")
-            return [{"host": host, "status": "ERROR", "latency": None}]
+
+            client_list.append(
+                {
+                    "host": received.psrc,
+                    "status": "UP",
+                    "latency": latency,
+                    "mac": received.hwsrc,
+                }
+            )
+
+        return client_list
+
+    except Exception as e:
+        print(f"[ERRO ARP] {host}: {e}")
+        return [{"host": host, "status": "ERROR", "latency": None}]
 
 
 # =========================
