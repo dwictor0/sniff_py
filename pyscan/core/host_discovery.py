@@ -3,6 +3,7 @@ import ipaddress
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import scapy.all as scapy
 
+
 # =========================
 # TCP Scanner
 # =========================
@@ -10,6 +11,7 @@ class TcpScanner:
     """
     Realiza verificação de disponibilidade de host via conexão TCP.
     """
+
 
 def __init__(self, timeout=2):
     """
@@ -83,6 +85,7 @@ def tcpSyn(self, host, port=80):
         print(f"[ERRO TCP SYN] {host}: {e}")
         return {"host": host, "status": "ERROR", "latency": None}
 
+
 # =========================
 # ICMP Scanner
 # =========================
@@ -132,6 +135,7 @@ class IcmpScanner:
         except (PermissionError, OSError) as e:
             print(f"[ERRO ICMP] {host}: {e}")
             return {"host": host, "status": "ERROR", "latency": None}
+
 
 # =========================
 # ARP Scanner
@@ -228,6 +232,7 @@ class ArpScanner:
         except (PermissionError, OSError) as e:
             print(f"[ERRO ARP] {host}: {e}")
             return [{"host": host, "status": "ERROR", "latency": None}]
+
 
 # =========================
 # Host Discovery
