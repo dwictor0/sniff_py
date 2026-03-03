@@ -82,7 +82,6 @@ class TcpScanner:
             print(f"[ERRO TCP SYN] {host}: {e}")
             return {"host": host, "status": "ERROR", "latency": None}
 
-
 # =========================
 # ICMP Scanner
 # =========================
@@ -133,7 +132,6 @@ class IcmpScanner:
             print(f"[ERRO ICMP] {host}: {e}")
             return {"host": host, "status": "ERROR", "latency": None}
 
-
 # =========================
 # ARP Scanner
 # =========================
@@ -149,14 +147,12 @@ class ArpScanner:
         Args:
             timeout (int | float): Tempo máximo de espera em segundos.
             iface (str | None): Interface de rede a ser utilizada.
-                                 Se None, utiliza a interface padrão do Scapy.
+            Se None, utiliza a interface padrão do Scapy.
         """
         self.timeout = timeout
         self.iface = iface or scapy.conf.iface
-
         self.local_ip = scapy.get_if_addr(self.iface)
         self.local_netmask = scapy.get_if_netmask(self.iface)
-
         self.local_network = ipaddress.IPv4Network(
             f"{self.local_ip}/{self.local_netmask}", strict=False
         )
@@ -230,7 +226,6 @@ class ArpScanner:
             print(f"[ERRO ARP] {host}: {e}")
             return [{"host": host, "status": "ERROR", "latency": None}]
 
-
 # =========================
 # Host Discovery
 # =========================
@@ -252,7 +247,6 @@ class HostDiscovery:
         self.timeout = timeout
         self.threads = threads
         self.tcp_port = tcp_port
-
         self.tcp_scanner = TcpScanner(timeout=self.timeout)
         self.icmp_scanner = IcmpScanner(timeout=self.timeout)
         self.arp_scanner = ArpScanner(timeout=self.timeout)
