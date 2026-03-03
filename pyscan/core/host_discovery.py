@@ -39,15 +39,21 @@ class IcmpScanner:
 
     def icmpPing(self, host):
         try:
-            pkt = (
-                scapy.Ether(dst="ff:ff:ff:ff:ff:ff") / scapy.IP(dst=host) / scapy.ICMP()
-            )
-            ans, _ = scapy.srp(pkt, timeout=self.timeout, verbose=False)
+            pkt = scapy.IP(dst=host) / scapy.ICMP()
+            start = time.time()
+            ans, _ = scapy.sr(pkt, timeout=self.timeout, verbose=False)
+            end = time.time()
+
             if ans:
-                latency = 1000 * (ans[0][1].time - ans[0][0].sent_time)
-                return {"host": host, "status": "UP", "latency": round(latency, 2)}
+                latency = 1000 * (end - start)
+                return {
+                    "host": host,
+                    "status": "UP",
+                    "latency": round(latency, 2),
+                }
             else:
                 return {"host": host, "status": "DOWN", "latency": None}
+
         except Exception as e:
             print(f"[ERRO ICMP] {host}: {e}")
             return {"host": host, "status": "ERROR", "latency": None}
