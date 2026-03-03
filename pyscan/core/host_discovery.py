@@ -13,46 +13,78 @@ class TcpScanner:
     Realiza verificação de disponibilidade de host via conexão TCP.
     """
 
-    def __init__(self, timeout=2):
-        """
-        Inicializa o scanner TCP.
 
-        Args:
-            timeout (int | float): Tempo máximo de espera em segundos.
-        """
-        self.timeout = timeout
+def __init__(self, timeout=2):
+    """
+    Inicializa o scanner TCP SYN.
 
-    def tcpSyn(self, host, port=80):
-        """
-        Verifica se um host está ativo tentando estabelecer conexão TCP.
+    Args:
+        timeout (int | float): Tempo máximo de espera em segundos.
+    """
+    self.timeout = timeout
 
-        Args:
-            host (str): Endereço IP ou hostname do alvo.
-            port (int): Porta TCP a ser testada.
 
-        Returns:
-            dict: Resultado contendo:
-                - host (str)
-                - status (str): UP, DOWN ou ERROR
-                - latency (float | None): Latência em ms
-        """
-        try:
-            start = time.time()
-            with socket.create_connection((host, port), timeout=self.timeout):
-                pass
-            latency = 1000 * (time.time() - start)
+def tcpSyn(self, host, port=80):
+    """
+    Executa TCP SYN scan para verificar se a porta está aberta.
 
-            return {"host": host, "status": "UP", "latency": round(latency, 2)}
+    Args:
+        host (str): IP alvo.
+        port (int): Porta TCP a ser testada.
 
-        except (socket.timeout, ConnectionRefusedError):
-            return {"host": host, "status": "DOWN", "latency": None}
+    Returns:
+        dict: Resultado contendo:
+            - host (str)
+            - status (str): UP, DOWN ou FILTERED
+            - latency (float | None)
+    """
+    try:
+        ip_layer = scapy.IP(dst=host)
+        tcp_layer = scapy.TCP(dport=port, flags="S")
+        packet = ip_layer / tcp_layer
 
-        except socket.gaierror:
-            return {"host": host, "status": "ERROR", "latency": None}
+        start = time.time()
+        response = scapy.sr1(packet, timeout=self.timeout, verbose=False)
+        latency = 1000 * (time.time() - start)
 
-        except OSError as e:
-            print(f"[ERRO TCP] {host}: {e}")
-            return {"host": host, "status": "ERROR", "latency": None}
+        if response is None:
+            return {
+                "host": host,
+                "status": "FILTERED",
+                "latency": None,
+            }
+
+        if response.haslayer(scapy.TCP):
+            tcp_flags = response.getlayer(scapy.TCP).flags
+
+            if tcp_flags == 0x12:
+                rst_packet = scapy.IP(dst=host) / scapy.TCP(
+                    dport=port, flags="R", seq=response.ack
+                )
+                scapy.send(rst_packet, verbose=False)
+
+                return {
+                    "host": host,
+                    "status": "UP",
+                    "latency": round(latency, 2),
+                }
+
+            elif tcp_flags == 0x14:
+                return {
+                    "host": host,
+                    "status": "DOWN",
+                    "latency": None,
+                }
+
+        return {
+            "host": host,
+            "status": "FILTERED",
+            "latency": None,
+        }
+
+    except (PermissionError, OSError) as e:
+        print(f"[ERRO TCP SYN] {host}: {e}")
+        return {"host": host, "status": "ERROR", "latency": None}
 
 
 # =========================
