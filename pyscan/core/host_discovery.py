@@ -3,7 +3,6 @@ import ipaddress
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import scapy.all as scapy
 
-
 # =========================
 # TCP Scanner
 # =========================
