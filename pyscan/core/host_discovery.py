@@ -185,9 +185,7 @@ class ArpScanner:
             for sent, received in answered:
                 latency = None
                 if hasattr(sent, "sent_time") and hasattr(received, "time"):
-                    latency = round(
-                        1000 * (received.time - sent.sent_time), 2
-                    )
+                    latency = round(1000 * (received.time - sent.sent_time), 2)
 
                 client_list.append(
                     {
@@ -252,8 +250,7 @@ class HostDiscovery:
             start_int = int(ipaddress.IPv4Address(start_ip))
             end_int = int(ipaddress.IPv4Address(end_ip))
             return [
-                str(ipaddress.IPv4Address(i))
-                for i in range(start_int, end_int + 1)
+                str(ipaddress.IPv4Address(i)) for i in range(start_int, end_int + 1)
             ]
 
         elif "/" in host_input:
