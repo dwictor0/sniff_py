@@ -1,5 +1,5 @@
 from pyscan.core.version_detector import VersionDetector
-from pyscan.core.models import ServiceVersion
+from pyscan.model.port_result import PortResult
 
 
 def test_detect_ssh():
@@ -34,7 +34,7 @@ def test_banner_bytes():
 
 
 def test_format_output():
-    result = ServiceVersion(
+    result = PortResult(
         port=22,
         protocol="tcp",
         state="OPEN",
@@ -42,7 +42,8 @@ def test_format_output():
         version="7.4",
     )
 
-    output = result.format_output()
+    output = str(result)
+
     assert "22/tcp" in output
     assert "OpenSSH" in output
     assert "7.4" in output
