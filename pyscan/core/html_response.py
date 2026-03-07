@@ -1,7 +1,5 @@
-from datetime import datetime
 from typing import List
 from model.html_report_host import HTMLReportHost
-from model.html_report_port import HTMLReportPort
 from model.html_report_metadata import HTMLReportMetadata
 
 
