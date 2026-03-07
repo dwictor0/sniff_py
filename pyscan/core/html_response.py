@@ -9,12 +9,17 @@ class HTMLReportGenerator:
     """Classe para gerar relatório HTML"""
 
     def __init__(self, metadata: HTMLReportMetadata, hosts: List[HTMLReportHost]):
-        self.metadata = metadata
-        self.hosts = hosts
+        try:
+            self.metadata = metadata
+            self.hosts = hosts
+        except Exception as e:
+            print(f"[ERROR] Falha ao inicializar HTMLReportGenerator: {e}")
+            raise
 
     def generate(self) -> str:
         """Gera o HTML completo"""
-        html = f"""<!DOCTYPE html>
+        try:
+            html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -81,11 +86,15 @@ th {{
 </body>
 </html>
 """
-        return html
+            return html
+        except Exception as e:
+            print(f"[ERROR] Falha ao gerar HTML: {e}")
+            raise
 
     def _generate_metadata_section(self) -> str:
         """Gera a seção de metadados"""
-        return f"""
+        try:
+            return f"""
 <div class="meta">
 <h2>Scan Metadata</h2>
 <p><b>Target:</b> {self.metadata.target}</p>
@@ -96,12 +105,16 @@ th {{
 <p><b>Duration:</b> {self.metadata.duration:.2f}s</p>
 </div>
 """
+        except Exception as e:
+            print(f"[ERROR] Falha ao gerar seção de metadados: {e}")
+            raise
 
     def _generate_hosts_section(self) -> str:
         """Gera a seção de hosts com portas"""
-        html = ""
-        for host in self.hosts:
-            html += f"""
+        try:
+            html = ""
+            for host in self.hosts:
+                html += f"""
 <div class="host">
 <h3>Host: {host.address}</h3>
 <table>
@@ -113,8 +126,8 @@ th {{
 <th>Version</th>
 </tr>
 """
-            for port in host.ports:
-                html += f"""
+                for port in host.ports:
+                    html += f"""
 <tr>
 <td>{port.port}</td>
 <td>{port.protocol}</td>
@@ -123,12 +136,19 @@ th {{
 <td>{port.version or '-'}</td>
 </tr>
 """
-            html += "</table></div>"
-        return html
+                html += "</table></div>"
+            return html
+        except Exception as e:
+            print(f"[ERROR] Falha ao gerar seção de hosts: {e}")
+            raise
 
     def save(self, path: str = "report.html"):
         """Salva o HTML gerado em arquivo"""
-        html_content = self.generate()
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(html_content)
-        print(f"[INFO] Relatório HTML gerado em: {path}")
+        try:
+            html_content = self.generate()
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(html_content)
+            print(f"[INFO] Relatório HTML gerado em: {path}")
+        except Exception as e:
+            print(f"[ERROR] Falha ao salvar arquivo HTML: {e}")
+            raise
