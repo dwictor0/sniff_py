@@ -72,6 +72,7 @@ Exemplos:
 
     args = parser.parse_args()
 
+
     if args.config:
 
         timeout = float(args.config[0])
