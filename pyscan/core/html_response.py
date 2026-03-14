@@ -11,19 +11,18 @@ class HTMLReportGenerator:
     def __init__(self, metadata: HTMLReportMetadata, hosts: List[HTMLReportHost]):
         self.metadata = metadata
         self.hosts = hosts
-
-        self._sanitize_hosts()
-
+        self._prepare_hosts()  
         self.env = Environment(
             loader=FileSystemLoader("pyscan/templates"),
             autoescape=select_autoescape(["html", "xml"]),
         )
         self.template = self.env.get_template("report_template.html")
 
-    def _sanitize_hosts(self):
-        """Sanitiza strings de hosts e portas"""
+    def _prepare_hosts(self):
+        """Sanitiza e ordena portas de cada host"""
         for host in self.hosts:
             host.address = self.sanitize(host.address)
+            host.ports.sort(key=lambda p: (p.port, p.protocol))
             for port in host.ports:
                 port.protocol = self.sanitize(port.protocol)
                 port.state = self.sanitize(port.state)
