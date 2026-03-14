@@ -25,29 +25,26 @@ class ServiceDetector:
 
     def detect_service(self, host, port):
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(self.timeout)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(self.timeout)
+                sock.connect((host, port))
+                if port in [80, 8080]:
+                    sock.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
 
-            sock.connect((host, port))
+                banner = ""
+                try:
+                    banner = sock.recv(1024).decode(errors="ignore").strip()
+                except Exception as e:
+                    print(f"[ERROR] {host}: {e}")
+                    return {"host": host, "status": "ERROR", "latency": None}
 
-            if port in [80, 8080]:
-                sock.sendall(b"HEAD / HTTP/1.0\r\n\r\n")
 
-            banner = ""
-            try:
-                banner = sock.recv(1024).decode(errors="ignore").strip()
-            except Exception as e:
-                print(f"[ERROR] {host}: {e}")
-                return {"host": host, "status": "ERROR", "latency": None}
+                service = self.identify_by_banner(banner)
 
-            sock.close()
+                if not service:
+                    service = self.default_ports.get(port, "UNKNOWN")
 
-            service = self.identify_by_banner(banner)
-
-            if not service:
-                service = self.default_ports.get(port, "UNKNOWN")
-
-            return {"port": port, "status": "OPEN", "service": service}
+                return {"port": port, "status": "OPEN", "service": service}
 
         except (socket.timeout, ConnectionRefusedError):
             return {"port": port, "status": "CLOSED"}
