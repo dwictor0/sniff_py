@@ -86,9 +86,6 @@ pyscan port 192.168.0.1 -p 1-1024 --scan-type syn --threads 50 --timeout 1.5
 
     args = parser.parse_args()
 
-    # =========================
-    # EXECUÇÃO
-    # =========================
     if args.command == "host":
         hd = HostDiscovery()
         results = hd.discover(args.target, method=args.method)
