@@ -42,9 +42,16 @@ def test_syn_scan_open(monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "pyscan.core.port_scanner.sr1", lambda pkt, timeout, verbose: MockResp()
+        "pyscan.core.port_scanner.sr1",
+        lambda pkt,
+        timeout,
+        verbose: MockResp()
     )
-    monkeypatch.setattr("pyscan.core.port_scanner.send", lambda pkt, verbose: None)
+    monkeypatch.setattr(
+        "pyscan.core.port_scanner.send",
+        lambda pkt,
+        verbose: None
+    )
 
     result = scanner._syn_scan("127.0.0.1", 80)
     assert result.state == "OPEN"
@@ -64,7 +71,10 @@ def test_syn_scan_closed(monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "pyscan.core.port_scanner.sr1", lambda pkt, timeout, verbose: MockResp()
+        "pyscan.core.port_scanner.sr1",
+        lambda pkt,
+        timeout,
+        verbose: MockResp()
     )
 
     result = scanner._syn_scan("127.0.0.1", 80)
