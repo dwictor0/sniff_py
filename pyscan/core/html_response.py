@@ -7,9 +7,9 @@ class HTMLReportGenerator:
     """Classe para gerar relatório HTML"""
 
     def __init__(self, metadata: HTMLReportMetadata, hosts: List[HTMLReportHost]):
-            self.metadata = metadata
-            self.hosts = hosts
-        
+        self.metadata = metadata
+        self.hosts = hosts
+
     def generate(self) -> str:
         """Gera o HTML completo"""
         try:
