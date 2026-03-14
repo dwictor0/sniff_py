@@ -19,7 +19,7 @@ class ScanConfig:
             e ajuste de performance.
     """
 
-    def __init__(self, timeout=1.0, threads=100, delay=0):
+    def __init__(self, timeout: float = 1.0, threads: int = 100, delay: float = 0.0):
         """
         Inicializa a configuração global do scanner.
 
@@ -43,3 +43,15 @@ class ScanConfig:
         print(f"Threads: {self.threads}")
         print(f"Timeout: {self.timeout}s")
         print(f"Delay: {self.delay}s\n")
+
+    def to_dict(self):
+        """
+        Retorna a configuração em formato de dicionário.
+
+        Útil para integração com outros módulos do sistema.
+        """
+        return {
+            "timeout": self.timeout,
+            "threads": self.threads,
+            "delay": self.delay,
+        }
