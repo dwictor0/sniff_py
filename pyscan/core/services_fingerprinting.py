@@ -118,7 +118,6 @@ class ServiceFingerprintScanner:
         if ports is None:
             ports = range(1, 1025)
 
-
         if isinstance(ports, int):
             ports = [ports]
 
