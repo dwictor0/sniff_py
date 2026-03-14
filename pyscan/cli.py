@@ -2,62 +2,93 @@
 
 import argparse
 from pyscan.core.port_scanner import PortScanner
+from pyscan.core.host_discovery import HostDiscovery
 from pyscan.utils.report import print_console
 
 
 def main():
     parser = argparse.ArgumentParser(
         prog="pyscan",
-        description="TCP Port Scanner - Connect Scan ou SYN Scan",
-        epilog="""
-Exemplos:
-  pyscan 127.0.0.1 -p 80
-  pyscan 127.0.0.1 -p 1-100
-  pyscan 127.0.0.1 -p "top 10"
-  pyscan 192.168.0.1 -p 1-1024 --scan-type syn
-""",
-        formatter_class=argparse.RawTextHelpFormatter,
+        description="Network Scanner",
     )
 
-    parser.add_argument("target", help="Host alvo para escaneamento (IP ou domínio)")
-    parser.add_argument(
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # =========================
+    # Host Discovery
+    # =========================
+    host_parser = subparsers.add_parser("host", help="Host discovery")
+
+    host_parser.add_argument(
+        "target",
+        help="Host ou rede alvo (IP, range ou CIDR)",
+    )
+
+    host_parser.add_argument(
+        "method",
+        choices=["icmp", "tcp", "arp"],
+        help="Método de host discovery",
+    )
+
+    # =========================
+    # Port Scanner
+    # =========================
+    port_parser = subparsers.add_parser("port", help="Port scanning")
+
+    port_parser.add_argument(
+        "target",
+        help="Host alvo para escaneamento",
+    )
+
+    port_parser.add_argument(
         "-p",
         "--ports",
         required=True,
-        help='Porta específica (80), range (1-100) ou top N ("top 10")',
+        help='Porta (80), range (1-100) ou top N ("top 10")',
     )
-    parser.add_argument(
+
+    port_parser.add_argument(
         "--scan-type",
         choices=["connect", "syn"],
         default="connect",
-        help="Tipo de varredura TCP (default: connect)",
+        help="Tipo de varredura TCP",
     )
-    parser.add_argument(
+
+    port_parser.add_argument(
         "-t",
         "--threads",
         type=int,
         default=100,
-        help="Número de threads (default: 100)",
+        help="Número de threads",
     )
-    parser.add_argument(
+
+    port_parser.add_argument(
         "--timeout",
         type=float,
         default=1.0,
-        help="Timeout por porta em segundos (default: 1.0)",
+        help="Timeout por porta",
     )
-    parser.add_argument("--version", action="version", version="pyscan 0.1.0")
 
     args = parser.parse_args()
 
-    scanner = PortScanner(
-        scan_type=args.scan_type,
-        threads=args.threads,
-        timeout=args.timeout,
-    )
+    # =========================
+    # EXECUÇÃO
+    # =========================
+    if args.command == "host":
+        hd = HostDiscovery()
+        results = hd.discover(args.target, method=args.method)
 
-    ports = scanner.parse_ports(args.ports)
-    result = scanner.scan(args.target, ports)
-    print_console(result)
+    elif args.command == "port":
+        scanner = PortScanner(
+            scan_type=args.scan_type,
+            threads=args.threads,
+            timeout=args.timeout,
+        )
+
+        ports = scanner.parse_ports(args.ports)
+        results = scanner.scan(args.target, ports)
+
+        print_console(results)
 
 
 # permite rodar com: python -m pyscan.cli
