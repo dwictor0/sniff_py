@@ -11,11 +11,18 @@ def main():
         prog="pyscan",
         description="Network Scanner",
         epilog="""
-            Exemplos:
-                pyscan 127.0.0.1 -p 80
-                pyscan 127.0.0.1 -p 1-100
-                pyscan 127.0.0.1 -p "top 10"
-                pyscan 192.168.0.1 -p 1-1024 --scan-type syn
+Exemplos de uso:
+
+Host Enumeration
+pyscan host 192.168.0.0/24 icmp
+pyscan host 192.168.0.1 arp
+pyscan host 192.168.0.10 tcp
+
+Port Scan
+pyscan port 192.168.0.1 -p 80
+pyscan port 192.168.0.1 -p 1-100
+pyscan port 192.168.0.1 -p "top 10"
+pyscan port 192.168.0.1 -p 1-1024 --scan-type syn --threads 50 --timeout 1.5
         """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
