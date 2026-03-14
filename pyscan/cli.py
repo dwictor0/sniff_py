@@ -90,5 +90,6 @@ def main():
 
         print_console(results)
 
+
 if __name__ == "__main__":
     main()
