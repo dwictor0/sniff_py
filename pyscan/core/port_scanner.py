@@ -35,31 +35,27 @@ class PortScanner:
     """
 
     def __init__(
-        self, scan_type: str = "connect", threads: int = 100, timeout: float = 1.0
+        self,
+        scan_type: str = "connect",
+        threads: int = 100,
+        timeout: float = 1.0,
+        delay: float = 0.0,
     ):
         """
         Inicializa o scanner.
-        Argumentos:
-        scan_type: Tipo de varredura ("connect" ou "syn").
-        threads: Número de threads simultâneas.
-        timeout: Tempo limite do socket em segundos.
+
+        Args:
+            scan_type: Tipo de varredura ("connect" ou "syn")
+            threads: Número de threads simultâneas
+            timeout: Timeout por conexão
+            delay: Delay entre probes (controle de performance)
         """
         self.scan_type = scan_type
         self.threads = threads
         self.timeout = timeout
+        self.delay = delay
 
     def parse_ports(self, port_input: str) -> List[int]:
-        """
-        Analisa uma string de entrada de porta e a converte em uma lista de números inteiros.
-        Formatos suportados:
-        - Porta única (ex.: "80")
-        - Intervalo (ex.: "20-25")
-        - Portas principais (ex.: "top 5")
-        Argumentos:
-        port_input: String de porta fornecida pelo usuário.
-        Retorno:
-        Lista de portas como números inteiros.
-        """
         port_input = port_input.strip().lower()
 
         if port_input.startswith("top"):
@@ -73,16 +69,6 @@ class PortScanner:
         return [int(port_input)]
 
     def get_banner(self, host: str, port: int) -> Optional[str]:
-        """
-        Tentativa de recuperar o banner de serviço de uma porta.
-
-        Envia uma sondagem mínima ao serviço e lê a resposta.
-        Argumentos:
-        host: Host de destino.
-        port: Porta de destino.
-        Retorno:
-        String do banner, se disponível; caso contrário, None.
-        """
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(self.timeout)
@@ -100,14 +86,10 @@ class PortScanner:
             return None
 
     def _connect_scan(self, host: str, port: int) -> PortResult:
-        """
-        Executa uma varredura de conexão TCP em uma porta específica.
-        Argumentos:
-            host: Host de destino.
-            port: Porta de destino.
-            Retorno:
-            PortResult contendo o resultado da varredura.
-        """
+
+        if self.delay > 0:
+            time.sleep(self.delay)
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(self.timeout)
 
@@ -139,15 +121,10 @@ class PortScanner:
         )
 
     def _syn_scan(self, host: str, port: int) -> PortResult:
-        """
-        Realiza uma varredura TCP SYN (semiaberta) em uma porta específica.
-        Requer a instalação do Scapy.
-        Argumentos:
-            host: Host de destino.
-            port: Porta de destino.
-            Retorno:
-            PortResult contendo o resultado da varredura.
-        """
+
+        if self.delay > 0:
+            time.sleep(self.delay)
+
         if not SCAPY_AVAILABLE:
             return PortResult(port, "tcp", "SCAPY_NOT_INSTALLED")
 
@@ -158,6 +135,7 @@ class PortScanner:
             return PortResult(port, "tcp", "FILTERED")
 
         if resp.haslayer(TCP):
+
             if resp[TCP].flags == 0x12:
                 send(IP(dst=host) / TCP(dport=port, flags="R"), verbose=0)
                 return PortResult(port, "tcp", "OPEN")
@@ -168,14 +146,7 @@ class PortScanner:
         return PortResult(port, "tcp", "FILTERED")
 
     def scan(self, host: str, ports: List[int]) -> ScanResult:
-        """
-        Executa uma varredura de portas em um host.
-        Argumentos:
-            host: Host alvo.
-            portas: Lista de portas a serem varridas.
-            Retorno:
-            Resultado da varredura contendo todos os resultados da varredura de portas e a duração da varredura.
-        """
+
         start_time = time.time()
         results = []
 
@@ -184,6 +155,7 @@ class PortScanner:
         )
 
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
+
             futures = [executor.submit(scan_function, host, port) for port in ports]
 
             for future in as_completed(futures):
