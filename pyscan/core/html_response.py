@@ -11,7 +11,7 @@ class HTMLReportGenerator:
     def __init__(self, metadata: HTMLReportMetadata, hosts: List[HTMLReportHost]):
         self.metadata = metadata
         self.hosts = hosts
-        self._prepare_hosts()  
+        self._prepare_hosts()
         self.env = Environment(
             loader=FileSystemLoader("pyscan/templates"),
             autoescape=select_autoescape(["html", "xml"]),
