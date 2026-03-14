@@ -6,6 +6,27 @@ from pyscan.core.port_scanner import PortScanner
 from pyscan.core.config import ScanConfig
 from pyscan.utils.report import print_console
 
+MODES = {
+    "fast": {
+        "ports": "top 100",
+        "timeout": 1.0,
+        "threads": 50,
+        "delay": 0,
+    },
+    "full": {
+        "ports": "1-65535",
+        "timeout": 1.5,
+        "threads": 200,
+        "delay": 0,
+    },
+    "stealth": {
+        "ports": "top 100",
+        "timeout": 2.0,
+        "threads": 20,
+        "delay": 0.5,
+    },
+}
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -13,12 +34,49 @@ def main():
         description="PyScan - TCP Port Scanner",
         epilog="""
 Exemplos:
-  pyscan 127.0.0.1 -p 80
-  pyscan 127.0.0.1 -p 1-100
-  pyscan 127.0.0.1 -p "top 10"
-  pyscan 192.168.0.1 -p 1-1024 --scan-type syn
-  pyscan scanme.nmap.org -p 80,443 --threads 200 --timeout 0.5
-  pyscan 192.168.0.1 -p 1-100 --config 0.5 200 0
+
+  Scan simples em uma porta
+    pyscan 127.0.0.1 -p 80
+
+  Scan em um range de portas
+    pyscan 127.0.0.1 -p 1-100
+
+  Scan nas top 10 portas mais comuns
+    pyscan 127.0.0.1 -p "top 10"
+
+  Scan SYN em múltiplas portas
+    pyscan 192.168.0.1 -p 1-1024 --scan-type syn
+
+  Scan com configuração personalizada
+    pyscan scanme.nmap.org -p 80,443 --threads 200 --timeout 0.5
+
+  Configuração global manual
+    pyscan 192.168.0.1 -p 1-100 --config 0.5 200 0
+
+
+Modos de execução:
+
+  FAST
+    Scan rápido nas 100 portas mais comuns
+    Timeout: 1s | Threads: 50 | Delay: 0
+    pyscan 192.168.0.1 --mode fast
+
+  FULL
+    Scan completo em todas as portas TCP
+    Timeout: 1.5s | Threads: 200 | Delay: 0
+    pyscan 192.168.0.1 --mode full
+
+  STEALTH
+    Scan mais discreto com menor paralelismo
+    Timeout: 2s | Threads: 20 | Delay: 0.5
+    pyscan 192.168.0.1 --mode stealth
+
+
+Observação:
+  Parâmetros definidos na CLI sobrescrevem os valores do modo.
+
+  Exemplo:
+    pyscan 192.168.0.1 --mode fast --threads 150
 """,
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -26,9 +84,15 @@ Exemplos:
     parser.add_argument("target", help="Host alvo para escaneamento (IP ou domínio)")
 
     parser.add_argument(
+        "--mode",
+        choices=["fast", "full", "stealth"],
+        help="Modo de execução predefinido",
+    )
+
+    parser.add_argument(
         "-p",
         "--ports",
-        required=True,
+        required=False,
         help='Porta específica (80), range (1-100) ou top N ("top 10")',
     )
 
@@ -71,6 +135,27 @@ Exemplos:
     parser.add_argument("--version", action="version", version="pyscan 0.1.0")
 
     args = parser.parse_args()
+
+    if args.mode:
+
+        mode = MODES[args.mode]
+
+        if not args.ports:
+            args.ports = mode["ports"]
+
+        if args.timeout == 1.0:
+            args.timeout = mode["timeout"]
+
+        if args.threads == 100:
+            args.threads = mode["threads"]
+
+        if args.delay == 0:
+            args.delay = mode["delay"]
+
+        print(f"[MODE] {args.mode.upper()}")
+        print(
+            f"{args.ports} | Timeout: {args.timeout}s | Threads: {args.threads} | Delay: {args.delay}s\n"
+        )
 
     if args.config:
 
