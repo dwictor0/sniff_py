@@ -1,5 +1,7 @@
+from unittest.mock import patch, MagicMock
 from pyscan.core.version_detector import VersionDetector
 from pyscan.model.port_result import PortResult
+from pyscan.core.services_fingerprinting import ServiceDetector
 
 
 def test_detect_ssh():
@@ -47,3 +49,32 @@ def test_format_output():
     assert "22/tcp" in output
     assert "OpenSSH" in output
     assert "7.4" in output
+
+
+def test_detect_service_closed():
+    detector = ServiceDetector(timeout=1)
+
+    with patch("socket.socket") as mock_socket:
+        instance = MagicMock()
+        instance.connect.side_effect = ConnectionRefusedError
+        mock_socket.return_value.__enter__.return_value = instance
+
+        result = detector.detect_service("127.0.0.1", 22)
+
+        assert result["status"] == "CLOSED"
+
+
+def test_detect_service_open():
+    detector = ServiceDetector(timeout=1)
+
+    with patch("socket.socket") as mock_socket:
+        instance = MagicMock()
+        instance.connect.return_value = None
+        instance.recv.return_value = b"SSH-2.0-OpenSSH_7.4"
+        mock_socket.return_value.__enter__.return_value = instance
+
+        result = detector.detect_service("127.0.0.1", 22)
+
+        assert result["status"] == "OPEN"
+        assert result["service"] == "SSH"
+        assert "SSH" in result["banner"]
