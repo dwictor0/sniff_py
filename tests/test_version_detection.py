@@ -1,7 +1,5 @@
-from unittest.mock import patch, MagicMock
 from pyscan.core.version_detector import VersionDetector
 from pyscan.model.port_result import PortResult
-from pyscan.core.services_fingerprinting import ServiceDetector
 
 
 def test_detect_ssh():
