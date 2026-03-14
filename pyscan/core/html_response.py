@@ -7,13 +7,9 @@ class HTMLReportGenerator:
     """Classe para gerar relatório HTML"""
 
     def __init__(self, metadata: HTMLReportMetadata, hosts: List[HTMLReportHost]):
-        try:
             self.metadata = metadata
             self.hosts = hosts
-        except Exception as e:
-            print(f"[ERROR] Falha ao inicializar HTMLReportGenerator: {e}")
-            raise
-
+        
     def generate(self) -> str:
         """Gera o HTML completo"""
         try:
