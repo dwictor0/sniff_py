@@ -90,7 +90,5 @@ def main():
 
         print_console(results)
 
-
-# permite rodar com: python -m pyscan.cli
 if __name__ == "__main__":
     main()
