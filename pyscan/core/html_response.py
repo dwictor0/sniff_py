@@ -2,7 +2,8 @@ from typing import List
 from model.html_report_host import HTMLReportHost
 from model.html_report_metadata import HTMLReportMetadata
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-import html  
+import html
+
 
 class HTMLReportGenerator:
     """Classe para gerar relatório HTML usando template com a lib Jinja2"""
@@ -39,7 +40,9 @@ class HTMLReportGenerator:
     def generate(self) -> str:
         """Gera o HTML completo usando template"""
         try:
-            html_content = self.template.render(metadata=self.metadata, hosts=self.hosts)
+            html_content = self.template.render(
+                metadata=self.metadata, hosts=self.hosts
+            )
             return html_content
         except Exception as e:
             print(f"[ERROR] Falha ao gerar HTML: {e}")
