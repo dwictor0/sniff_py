@@ -1,5 +1,6 @@
 import time
 import ipaddress
+import netifaces
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import scapy.all as scapy
 
@@ -154,8 +155,10 @@ class ArpScanner:
         """
         self.timeout = timeout
         self.iface = iface or scapy.conf.iface
-        self.local_ip = scapy.get_if_addr(self.iface)
-        self.local_netmask = scapy.get_if_netmask(self.iface)
+        iface_name = self.iface.name if hasattr(self.iface, "name") else self.iface
+        self.local_ip = scapy.get_if_addr(iface_name)
+        netif = netifaces.ifaddresses(iface_name)
+        self.local_netmask = netif[netifaces.AF_INET][0]['netmask']
         self.local_network = ipaddress.IPv4Network(
             f"{self.local_ip}/{self.local_netmask}", strict=False
         )
@@ -336,8 +339,8 @@ class HostDiscovery:
                 if r["latency"] is not None
                 else "Timeout"
             )
-            print(f"[{r['status']}] {r['host']} {lat_str}")
-
+            print(f"[{r['status']:^7}] {r['host']:<15} {lat_str}")
+            
         print("\n[INFO] Descoberta finalizada.")
         print(f"Hosts ativos: {total_hosts}")
         print(f"Tempo total: {end_time - start_time:.2f}s")
