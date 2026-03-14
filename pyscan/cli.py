@@ -10,6 +10,14 @@ def main():
     parser = argparse.ArgumentParser(
         prog="pyscan",
         description="Network Scanner",
+        epilog="""
+            Exemplos:
+                pyscan 127.0.0.1 -p 80
+                pyscan 127.0.0.1 -p 1-100
+                pyscan 127.0.0.1 -p "top 10"
+                pyscan 192.168.0.1 -p 1-1024 --scan-type syn
+        """,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
