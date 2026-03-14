@@ -137,7 +137,8 @@ class ServiceFingerprintScanner:
                     if result["status"] == "OPEN":
                         open_ports.append(result)
 
-                except Exception:
+                except Exception as e:
+                    print(f"[ERROR] Falha ao escanear porta {futures[future]}: {e}")
                     continue
 
         open_ports.sort(key=lambda x: x["port"])
