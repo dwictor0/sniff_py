@@ -1,5 +1,6 @@
 import socket
 import ssl
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
@@ -81,24 +82,25 @@ class ServiceDetector:
             return {"port": port, "status": "CLOSED"}
 
     def identify_by_banner(self, banner):
+        if not banner:
+            return None
+
         banner = banner.upper()
 
-        if "SSH" in banner:
-            return "SSH"
-        elif "HTTP" in banner:
-            return "HTTP"
-        elif "FTP" in banner:
-            return "FTP"
-        elif "SMTP" in banner:
-            return "SMTP"
-        elif "MYSQL" in banner:
-            return "MYSQL"
-        elif "POP3" in banner:
-            return "POP3"
-        elif "IMAP" in banner:
-            return "IMAP"
-        elif "RDP" in banner:
-            return "RDP"
+        services_patterns = {
+            "SSH": r"\bSSH\b",
+            "HTTP": r"\bHTTP\b",
+            "FTP": r"\bFTP\b",
+            "SMTP": r"\bSMTP\b",
+            "MYSQL": r"\bMYSQL\b",
+            "POP3": r"\bPOP3\b",
+            "IMAP": r"\bIMAP\b",
+            "RDP": r"\bRDP\b",
+        }
+
+        for service, pattern in services_patterns.items():
+            if re.search(pattern, banner):
+                return service
 
         return None
 
