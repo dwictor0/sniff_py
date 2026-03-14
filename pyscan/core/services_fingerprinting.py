@@ -77,6 +77,8 @@ class ServiceDetector:
 
         except Exception:
             return {"port": port, "status": "ERROR"}
+        except (socket.timeout, ConnectionRefusedError, OSError):
+            return {"port": port, "status": "CLOSED"}
 
     def identify_by_banner(self, banner):
         banner = banner.upper()
