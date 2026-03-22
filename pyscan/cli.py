@@ -3,7 +3,7 @@ import time
 
 from pyscan.core.port_scanner import PortScanner
 from pyscan.core.config import ScanConfig
-from pyscan.model.mode import MODES, ModeConfig
+from pyscan.model.mode import get_mode, ModeConfig
 from pyscan.utils.report import print_console
 
 
@@ -17,6 +17,24 @@ def validate_non_negative(value, name):
     if value < 0:
         raise argparse.ArgumentTypeError(f"{name} não pode ser negativo")
     return value
+
+
+def apply_mode_defaults(args, mode: ModeConfig):
+    """
+    Aplica valores padrão do modo apenas se o usuário
+    não tiver sobrescrito via CLI.
+    """
+    if not args.ports:
+        args.ports = mode.ports
+
+    if args.timeout == 1.0:
+        args.timeout = mode.timeout
+
+    if args.threads == 100:
+        args.threads = mode.threads
+
+    if args.delay == 0:
+        args.delay = mode.delay
 
 
 def main():
@@ -77,25 +95,15 @@ def main():
     args = parser.parse_args()
 
     if args.mode:
-        mode: ModeConfig = MODES[args.mode]
+        mode: ModeConfig = get_mode(args.mode)
 
-        if not args.ports:
-            args.ports = mode.ports
-
-        if args.timeout == 1.0:
-            args.timeout = mode.timeout
-
-        if args.threads == 100:
-            args.threads = mode.threads
-
-        if args.delay == 0:
-            args.delay = mode.delay
+        apply_mode_defaults(args, mode)
 
         print(f"[MODE] {mode.name}")
-        print(f"{'Ports:':<10}{mode.ports}")
-        print(f"{'Timeout:':<10}{mode.timeout:<8.2f}s")
-        print(f"{'Threads:':<10}{mode.threads:<8}")
-        print(f"{'Delay:':<10}{mode.delay:<8.2f}s\n")
+        print(mode.describe() + "\n")
+
+    if not args.ports:
+        parser.error("Informe --ports ou utilize um --mode")
 
     if args.config:
         timeout = validate_positive(float(args.config[0]), "Timeout")
