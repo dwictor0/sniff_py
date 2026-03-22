@@ -1,87 +1,32 @@
-# pyscan/cli.py
-
 import argparse
 import time
+
 from pyscan.core.port_scanner import PortScanner
 from pyscan.core.config import ScanConfig
+from pyscan.model.mode import MODES, ModeConfig
 from pyscan.utils.report import print_console
 
-MODES = {
-    "fast": {
-        "ports": "top 100",
-        "timeout": 1.0,
-        "threads": 50,
-        "delay": 0,
-    },
-    "full": {
-        "ports": "1-65535",
-        "timeout": 1.5,
-        "threads": 200,
-        "delay": 0,
-    },
-    "stealth": {
-        "ports": "top 100",
-        "timeout": 2.0,
-        "threads": 20,
-        "delay": 0.5,
-    },
-}
+
+def validate_positive(value, name):
+    if value <= 0:
+        raise argparse.ArgumentTypeError(f"{name} deve ser maior que 0")
+    return value
+
+
+def validate_non_negative(value, name):
+    if value < 0:
+        raise argparse.ArgumentTypeError(f"{name} não pode ser negativo")
+    return value
 
 
 def main():
     parser = argparse.ArgumentParser(
         prog="pyscan",
         description="PyScan - TCP Port Scanner",
-        epilog="""
-Exemplos:
-
-  Scan simples em uma porta
-    pyscan 127.0.0.1 -p 80
-
-  Scan em um range de portas
-    pyscan 127.0.0.1 -p 1-100
-
-  Scan nas top 10 portas mais comuns
-    pyscan 127.0.0.1 -p "top 10"
-
-  Scan SYN em múltiplas portas
-    pyscan 192.168.0.1 -p 1-1024 --scan-type syn
-
-  Scan com configuração personalizada
-    pyscan scanme.nmap.org -p 80,443 --threads 200 --timeout 0.5
-
-  Configuração global manual
-    pyscan 192.168.0.1 -p 1-100 --config 0.5 200 0
-
-
-Modos de execução:
-
-  FAST
-    Scan rápido nas 100 portas mais comuns
-    Timeout: 1s | Threads: 50 | Delay: 0
-    pyscan 192.168.0.1 --mode fast
-
-  FULL
-    Scan completo em todas as portas TCP
-    Timeout: 1.5s | Threads: 200 | Delay: 0
-    pyscan 192.168.0.1 --mode full
-
-  STEALTH
-    Scan mais discreto com menor paralelismo
-    Timeout: 2s | Threads: 20 | Delay: 0.5
-    pyscan 192.168.0.1 --mode stealth
-
-
-Observação:
-  Parâmetros definidos na CLI sobrescrevem os valores do modo.
-
-  Exemplo:
-    pyscan 192.168.0.1 --mode fast --threads 150
-""",
         formatter_class=argparse.RawTextHelpFormatter,
     )
 
-    parser.add_argument("target", help="Host alvo para escaneamento (IP ou domínio)")
+    parser.add_argument("target", help="Host alvo")
 
     parser.add_argument(
         "--mode",
@@ -92,7 +37,6 @@ Observação:
     parser.add_argument(
         "-p",
         "--ports",
-        required=False,
         help='Porta específica (80), range (1-100) ou top N ("top 10")',
     )
 
@@ -100,29 +44,25 @@ Observação:
         "--scan-type",
         choices=["connect", "syn"],
         default="connect",
-        help="Tipo de varredura TCP (default: connect)",
     )
 
     parser.add_argument(
         "-t",
         "--threads",
-        type=int,
+        type=lambda x: validate_positive(int(x), "Threads"),
         default=100,
-        help="Número de threads (default: 100)",
     )
 
     parser.add_argument(
         "--timeout",
-        type=float,
+        type=lambda x: validate_positive(float(x), "Timeout"),
         default=1.0,
-        help="Timeout por porta em segundos (default: 1.0)",
     )
 
     parser.add_argument(
         "--delay",
-        type=float,
+        type=lambda x: validate_non_negative(float(x), "Delay"),
         default=0,
-        help="Delay entre requisições em segundos (default: 0)",
     )
 
     parser.add_argument(
@@ -137,47 +77,50 @@ Observação:
     args = parser.parse_args()
 
     if args.mode:
-
-        mode = MODES[args.mode]
+        mode: ModeConfig = MODES[args.mode]
 
         if not args.ports:
-            args.ports = mode["ports"]
+            args.ports = mode.ports
 
         if args.timeout == 1.0:
-            args.timeout = mode["timeout"]
+            args.timeout = mode.timeout
 
         if args.threads == 100:
-            args.threads = mode["threads"]
+            args.threads = mode.threads
 
         if args.delay == 0:
-            args.delay = mode["delay"]
+            args.delay = mode.delay
 
-        print(f"[MODE] {args.mode.upper()}")
-        print(
-            f"{args.ports} | Timeout: {args.timeout}s | Threads: {args.threads} | Delay: {args.delay}s\n"
-        )
+        print(f"[MODE] {mode.name}")
+        print(f"{'Ports:':<10}{mode.ports}")
+        print(f"{'Timeout:':<10}{mode.timeout:<8.2f}s")
+        print(f"{'Threads:':<10}{mode.threads:<8}")
+        print(f"{'Delay:':<10}{mode.delay:<8.2f}s\n")
 
     if args.config:
-
-        timeout = float(args.config[0])
-        threads = int(args.config[1])
-        delay = float(args.config[2])
+        timeout = validate_positive(float(args.config[0]), "Timeout")
+        threads = validate_positive(int(args.config[1]), "Threads")
+        delay = validate_non_negative(float(args.config[2]), "Delay")
 
         config = ScanConfig(timeout, threads, delay)
 
-        config.print_config()
+        print("[CONFIG]")
+        print(f"{'Threads:':<12}{config.threads:<8}")
+        print(f"{'Timeout:':<12}{config.timeout:<8.2f}s")
+        print(f"{'Delay:':<12}{config.delay:<8.2f}s\n")
 
         scanner = PortScanner(
             scan_type=args.scan_type,
-            config=config,
+            threads=config.threads,
+            timeout=config.timeout,
+            delay=config.delay,
         )
 
     else:
-
         print("[CONFIG]")
-        print(f"Threads: {args.threads}")
-        print(f"Timeout: {args.timeout}s")
-        print(f"Delay: {args.delay}s\n")
+        print(f"{'Threads:':<12}{args.threads:<8}")
+        print(f"{'Timeout:':<12}{args.timeout:<8.2f}s")
+        print(f"{'Delay:':<12}{args.delay:<8.2f}s\n")
 
         scanner = PortScanner(
             scan_type=args.scan_type,
@@ -191,7 +134,6 @@ Observação:
     start_time = time.time()
 
     ports = scanner.parse_ports(args.ports)
-
     result = scanner.scan(args.target, ports)
 
     print_console(result)
