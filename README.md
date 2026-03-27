@@ -58,8 +58,14 @@ Siga os passos abaixo para rodar o scanner localmente:
 
 5. **Execute a ferramenta via CLI**:
     ```bash
-    python main.py --help
+    pyscan cli.py -h
     ```
+
+## Throubleshooting
+- **Caso o alias pyscan , não tenha sido reconhecido execute o seguinte comando para solucionar o erro:**
+```bash
+pip install -e . 
+```
 
 
 ---
