@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Report</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            background: #fff;
+            color: #000;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 4px;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .meta,
+        .host {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 6px 8px;
+            border: 1px solid #000;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #e0e0e0;
+        }
+
+        .open {
+            color: green;
+            font-weight: bold;
+        }
+
+        .closed {
+            color: red;
+            font-weight: bold;
+        }
+
+        .filtered {
+            color: orange;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scanner</h1>
+    <div class="meta">
+        <h2>Scan Metadata</h2>
+        <p><b>Target:</b> {{ metadata.target }}</p>
+        <p><b>Mode:</b> {{ metadata.mode }}</p>
+        <p><b>Threads:</b> {{ metadata.threads }}</p>
+        <p><b>Timeout:</b> {{ metadata.timeout }}</p>
+        <p><b>Start Time:</b> {{ metadata.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+        <p><b>Duration:</b> {{ "%.2f"|format(metadata.duration) }}s</p>
+    </div>
+    {% for host in hosts %}
+    <div class="host">
+        <h3>Host: {{ host.address }}</h3>
+        <table>
+            <tr>
+                <th>Port</th>
+                <th>Protocol</th>
+                <th>State</th>
+                <th>Service</th>
+                <th>Version</th>
+            </tr>
+            {% for port in host.ports %}
+            <tr>
+                <td>{{ port.port }}</td>
+                <td>{{ port.protocol }}</td>
+                <td class="{{ port.state|lower }}">{{ port.state }}</td>
+                <td>{{ port.service or '-' }}</td>
+                <td>{{ port.version or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+</body>
+</html>
