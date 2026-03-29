@@ -63,7 +63,7 @@ EXEMPLOS COMPLETOS
 ==============================
 
 🔍 HOST DISCOVERY
-pyscan 192.168.0.0/24 --host icmp
+sudo .venv/bin/pyscan 192.168.0.0/24 --host icmp
 pyscan 192.168.0.1 --host tcp
 pyscan 192.168.0.0/24 --host arp
 
@@ -82,7 +82,7 @@ pyscan 192.168.0.1 --config 0.5 200 0
 
 🧠 COMBINAÇÕES
 pyscan 192.168.0.1 -p 1-100 --mode fast
-pyscan 192.168.0.0/24 --host icmp --mode stealth
+sudo .venv/bin/pyscan/pyscan 192.168.0.0/24 --host icmp --mode stealth
         """,
     )
 
