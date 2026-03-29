@@ -1,8 +1,15 @@
-import time
 import ipaddress
-import netifaces
+import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import netifaces
 import scapy.all as scapy
+
+from pyscan.model.scan_result import HostDiscoveryResult, HostResult
+
+logging.getLogger("scapy").setLevel(logging.CRITICAL)
+logging.getLogger("scapy.runtime").setLevel(logging.CRITICAL)
 
 
 # =========================
@@ -14,27 +21,11 @@ class TcpScanner:
     """
 
     def __init__(self, timeout=2):
-        """
-        Inicializa o scanner TCP SYN.
-
-        Args:
-            timeout (int | float): Tempo máximo de espera em segundos.
-        """
         self.timeout = timeout
 
-    def tcpSyn(self, host, port=80):
+    def tcp_syn(self, host, port=80):
         """
-        Executa TCP SYN scan para verificar se a porta está aberta.
-
-        Args:
-            host (str): IP alvo.
-            port (int): Porta TCP a ser testada.
-
-        Returns:
-            dict: Resultado contendo:
-                - host (str)
-                - status (str): UP, DOWN ou FILTERED
-                - latency (float | None)
+        Executa TCP SYN para verificar disponibilidade do host.
         """
         try:
             ip_layer = scapy.IP(dst=host)
@@ -57,7 +48,9 @@ class TcpScanner:
 
                 if tcp_flags == 0x12:
                     rst_packet = scapy.IP(dst=host) / scapy.TCP(
-                        dport=port, flags="R", seq=response.ack
+                        dport=port,
+                        flags="R",
+                        seq=response.ack,
                     )
                     scapy.send(rst_packet, verbose=False)
 
@@ -67,7 +60,7 @@ class TcpScanner:
                         "latency": round(latency, 2),
                     }
 
-                elif tcp_flags == 0x14:
+                if tcp_flags == 0x14:
                     return {
                         "host": host,
                         "status": "DOWN",
@@ -80,9 +73,13 @@ class TcpScanner:
                 "latency": None,
             }
 
-        except (PermissionError, OSError) as e:
-            print(f"[ERRO TCP SYN] {host}: {e}")
-            return {"host": host, "status": "ERROR", "latency": None}
+        except (PermissionError, OSError) as exc:
+            print(f"[ERRO TCP SYN] {host}: {exc}")
+            return {
+                "host": host,
+                "status": "ERROR",
+                "latency": None,
+            }
 
 
 # =========================
@@ -90,30 +87,15 @@ class TcpScanner:
 # =========================
 class IcmpScanner:
     """
-    Realiza descoberta de host via ICMP Echo Request (ping).
+    Realiza descoberta de host via ICMP Echo Request.
     """
 
     def __init__(self, timeout=2):
-        """
-        Inicializa o scanner ICMP.
-
-        Args:
-            timeout (int | float): Tempo máximo de espera em segundos.
-        """
         self.timeout = timeout
 
-    def icmpPing(self, host):
+    def icmp_ping(self, host):
         """
         Envia um ICMP Echo Request para verificar disponibilidade do host.
-
-        Args:
-            host (str): Endereço IP alvo.
-
-        Returns:
-            dict: Resultado contendo:
-                - host (str)
-                - status (str): UP, DOWN ou ERROR
-                - latency (float | None): Latência em ms
         """
         try:
             pkt = scapy.IP(dst=host) / scapy.ICMP()
@@ -129,11 +111,19 @@ class IcmpScanner:
                     "latency": round(latency, 2),
                 }
 
-            return {"host": host, "status": "DOWN", "latency": None}
+            return {
+                "host": host,
+                "status": "DOWN",
+                "latency": None,
+            }
 
-        except (PermissionError, OSError) as e:
-            print(f"[ERRO ICMP] {host}: {e}")
-            return {"host": host, "status": "ERROR", "latency": None}
+        except (PermissionError, OSError) as exc:
+            print(f"[ERRO ICMP] {host}: {exc}")
+            return {
+                "host": host,
+                "status": "ERROR",
+                "latency": None,
+            }
 
 
 # =========================
@@ -145,14 +135,6 @@ class ArpScanner:
     """
 
     def __init__(self, timeout=1, iface=None):
-        """
-        Inicializa o scanner ARP.
-
-        Args:
-            timeout (int | float): Tempo máximo de espera em segundos.
-            iface (str | None): Interface de rede a ser utilizada.
-            Se None, utiliza a interface padrão do Scapy.
-        """
         self.timeout = timeout
         self.iface = iface or scapy.conf.iface
         iface_name = self.iface.name if hasattr(self.iface, "name") else self.iface
@@ -160,25 +142,13 @@ class ArpScanner:
         netif = netifaces.ifaddresses(iface_name)
         self.local_netmask = netif[netifaces.AF_INET][0]["netmask"]
         self.local_network = ipaddress.IPv4Network(
-            f"{self.local_ip}/{self.local_netmask}", strict=False
+            f"{self.local_ip}/{self.local_netmask}",
+            strict=False,
         )
 
-    def arpBroadcast(self, host):
+    def arp_broadcast(self, host):
         """
         Executa varredura ARP para um IP ou rede CIDR.
-
-        Args:
-            host (str): IP único ou rede no formato CIDR (ex: 192.168.1.0/24).
-
-        Returns:
-            list[dict]: Lista contendo:
-                - host (str)
-                - status (str): UP, DOWN ou ERROR
-                - latency (float | None)
-                - mac (str, opcional)
-
-        Raises:
-            ValueError: Se o host não pertencer à mesma rede local.
         """
         try:
             if "/" in host:
@@ -228,8 +198,8 @@ class ArpScanner:
 
             return client_list
 
-        except (PermissionError, OSError) as e:
-            print(f"[ERRO ARP] {host}: {e}")
+        except (PermissionError, OSError, ValueError) as exc:
+            print(f"[ERRO ARP] {host}: {exc}")
             return [{"host": host, "status": "ERROR", "latency": None}]
 
 
@@ -242,7 +212,7 @@ class HostDiscovery:
     utilizando diferentes métodos (ICMP, TCP ou ARP).
     """
 
-    def __init__(self, timeout=2, threads=50, tcp_port=80):
+    def __init__(self, timeout=2, threads=50, delay=0.0, tcp_port=80):
         """
         Inicializa o mecanismo de descoberta.
 
@@ -253,6 +223,7 @@ class HostDiscovery:
         """
         self.timeout = timeout
         self.threads = threads
+        self.delay = delay
         self.tcp_port = tcp_port
         self.tcp_scanner = TcpScanner(timeout=self.timeout)
         self.icmp_scanner = IcmpScanner(timeout=self.timeout)
@@ -282,13 +253,20 @@ class HostDiscovery:
                 str(ipaddress.IPv4Address(i)) for i in range(start_int, end_int + 1)
             ]
 
-        elif "/" in host_input:
+        if "/" in host_input:
             net = ipaddress.IPv4Network(host_input, strict=False)
             return [str(ip) for ip in net.hosts()]
 
-        else:
-            ipaddress.IPv4Address(host_input)
-            return [host_input]
+        ipaddress.IPv4Address(host_input)
+        return [host_input]
+
+    def _scan_with_delay(self, scanner_func, host):
+        result = scanner_func(host)
+
+        if self.delay > 0:
+            time.sleep(self.delay)
+
+        return result
 
     def discover(self, host_input, method="icmp"):
         """
@@ -308,9 +286,9 @@ class HostDiscovery:
         results = []
 
         scanner = {
-            "icmp": self.icmp_scanner.icmpPing,
-            "tcp": lambda h: self.tcp_scanner.tcpSyn(h, port=self.tcp_port),
-            "arp": self.arp_scanner.arpBroadcast,
+            "icmp": self.icmp_scanner.icmp_ping,
+            "tcp": lambda h: self.tcp_scanner.tcp_syn(h, port=self.tcp_port),
+            "arp": self.arp_scanner.arp_broadcast,
         }.get(method.lower())
 
         if not scanner:
@@ -319,7 +297,9 @@ class HostDiscovery:
         start_time = time.time()
 
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
-            futures = [executor.submit(scanner, h) for h in hosts]
+            futures = [
+                executor.submit(self._scan_with_delay, scanner, h) for h in hosts
+            ]
 
             for future in as_completed(futures):
                 res = future.result()
@@ -329,20 +309,20 @@ class HostDiscovery:
                 else:
                     results.append(res)
 
-        end_time = time.time()
+        duration = round(time.time() - start_time, 2)
 
-        total_hosts = sum(1 for r in results if r.get("status") == "UP")
-
-        for r in results:
-            lat_str = (
-                f"Latência: {r['latency']} ms"
-                if r["latency"] is not None
-                else "Timeout"
+        host_results = [
+            HostResult(
+                host=r["host"],
+                status=r["status"],
+                latency=r.get("latency"),
+                mac=r.get("mac"),
             )
-            print(f"[{r['status']:^7}] {r['host']:<15} {lat_str}")
+            for r in results
+        ]
 
-        print("\n[INFO] Descoberta finalizada.")
-        print(f"Hosts ativos: {total_hosts}")
-        print(f"Tempo total: {end_time - start_time:.2f}s")
-
-        return results
+        return HostDiscoveryResult(
+            host=host_input,
+            results=host_results,
+            duration=duration,
+        )

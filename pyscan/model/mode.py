@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict
+import re
 
 
 @dataclass(frozen=True)
@@ -9,7 +10,7 @@ class ModeConfig:
 
     Attributes:
         name (str): Nome do modo (FAST, FULL, STEALTH)
-        ports (str): Range de portas (ex: "top 100", "1-65535")
+        ports (str): Faixa de portas válida (ex: "top 100", "1-65535", "80")
         timeout (float): Timeout por operação
         threads (int): Número de threads
         delay (float): Intervalo entre probes
@@ -20,6 +21,47 @@ class ModeConfig:
     timeout: float
     threads: int
     delay: float
+
+    def __post_init__(self) -> None:
+        if not self._is_valid_ports(self.ports):
+            raise ValueError(
+                f"Valor inválido para ports: {self.ports}. "
+                "Use formatos como 'top 100', '1-65535' ou '80'."
+            )
+
+        if self.timeout <= 0:
+            raise ValueError("timeout deve ser maior que 0")
+
+        if self.threads <= 0:
+            raise ValueError("threads deve ser maior que 0")
+
+        if self.delay < 0:
+            raise ValueError("delay não pode ser negativo")
+
+    @staticmethod
+    def _is_valid_ports(value: str) -> bool:
+        """
+        Valida os formatos aceitos para ports.
+
+        Formatos válidos:
+        - "top 100"
+        - "80"
+        - "1-65535"
+        """
+        value = value.strip().lower()
+
+        if re.fullmatch(r"top \d+", value):
+            return True
+
+        if re.fullmatch(r"\d+", value):
+            port = int(value)
+            return 1 <= port <= 65535
+
+        if re.fullmatch(r"\d+-\d+", value):
+            start, end = map(int, value.split("-"))
+            return 1 <= start <= end <= 65535
+
+        return False
 
     def to_dict(self) -> dict:
         """
@@ -45,9 +87,6 @@ class ModeConfig:
         )
 
 
-# =========================
-# MODOS PADRÃO
-# =========================
 MODES: Dict[str, ModeConfig] = {
     "fast": ModeConfig(
         name="FAST",
@@ -73,9 +112,6 @@ MODES: Dict[str, ModeConfig] = {
 }
 
 
-# =========================
-# HELPERS (melhora muito o código)
-# =========================
 def get_mode(name: str) -> ModeConfig:
     """
     Retorna um modo pelo nome.
@@ -91,11 +127,11 @@ def get_mode(name: str) -> ModeConfig:
     """
     try:
         return MODES[name.lower()]
-    except KeyError:
-        raise ValueError(f"Modo inválido: {name}")
+    except KeyError as exc:
+        raise ValueError(f"Modo inválido: {name}") from exc
 
 
-def list_modes() -> list:
+def list_modes() -> list[str]:
     """
     Retorna lista de modos disponíveis.
     """
