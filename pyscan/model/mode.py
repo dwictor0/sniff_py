@@ -2,18 +2,15 @@ from dataclasses import dataclass
 from typing import Dict
 import re
 
+TOP_PORTS_REGEX = re.compile(r"top \d+")
+SINGLE_PORT_REGEX = re.compile(r"\d+")
+RANGE_PORTS_REGEX = re.compile(r"\d+-\d+")
+
 
 @dataclass(frozen=True)
 class ModeConfig:
     """
     Representa um modo de execução do scanner.
-
-    Attributes:
-        name (str): Nome do modo (FAST, FULL, STEALTH)
-        ports (str): Faixa de portas válida (ex: "top 100", "1-65535", "80")
-        timeout (float): Timeout por operação
-        threads (int): Número de threads
-        delay (float): Intervalo entre probes
     """
 
     name: str
@@ -40,33 +37,22 @@ class ModeConfig:
 
     @staticmethod
     def _is_valid_ports(value: str) -> bool:
-        """
-        Valida os formatos aceitos para ports.
-
-        Formatos válidos:
-        - "top 100"
-        - "80"
-        - "1-65535"
-        """
         value = value.strip().lower()
 
-        if re.fullmatch(r"top \d+", value):
+        if TOP_PORTS_REGEX.fullmatch(value):
             return True
 
-        if re.fullmatch(r"\d+", value):
+        if SINGLE_PORT_REGEX.fullmatch(value):
             port = int(value)
             return 1 <= port <= 65535
 
-        if re.fullmatch(r"\d+-\d+", value):
+        if RANGE_PORTS_REGEX.fullmatch(value):
             start, end = map(int, value.split("-"))
             return 1 <= start <= end <= 65535
 
         return False
 
     def to_dict(self) -> dict:
-        """
-        Converte o modo para dicionário.
-        """
         return {
             "name": self.name,
             "ports": self.ports,
@@ -80,6 +66,7 @@ class ModeConfig:
         Retorna descrição formatada do modo.
         """
         return (
+            f"[{self.name}] "
             f"{self.ports} | "
             f"Timeout: {self.timeout}s | "
             f"Threads: {self.threads} | "
@@ -113,18 +100,6 @@ MODES: Dict[str, ModeConfig] = {
 
 
 def get_mode(name: str) -> ModeConfig:
-    """
-    Retorna um modo pelo nome.
-
-    Args:
-        name (str): Nome do modo (fast, full, stealth)
-
-    Returns:
-        ModeConfig
-
-    Raises:
-        ValueError: Se o modo não existir
-    """
     try:
         return MODES[name.lower()]
     except KeyError as exc:
@@ -132,7 +107,4 @@ def get_mode(name: str) -> ModeConfig:
 
 
 def list_modes() -> list[str]:
-    """
-    Retorna lista de modos disponíveis.
-    """
     return list(MODES.keys())
