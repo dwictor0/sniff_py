@@ -1,11 +1,12 @@
 import argparse
 import time
+from datetime import datetime
 
 from pyscan.core.port_scanner import PortScanner
 from pyscan.core.host_discovery import HostDiscovery
 from pyscan.core.config import ScanConfig
 from pyscan.model.mode import get_mode, ModeConfig
-from pyscan.utils.report import print_console
+from pyscan.utils.report import print_console, export_html_report
 
 
 def validate_positive(value, name):
@@ -65,7 +66,7 @@ EXEMPLOS COMPLETOS
 🔍 HOST DISCOVERY
 sudo .venv/bin/pyscan 192.168.0.0/24 --host icmp
 pyscan 192.168.0.1 --host tcp
-pyscan 192.168.0.0/24 --host arp
+sudo .venv/bin/pyscan 192.168.0.0/24 --host arp
 
 ⚡ PORT SCAN
 pyscan 192.168.0.1 -p 80
@@ -80,9 +81,10 @@ pyscan 192.168.0.1 --mode stealth
 ⚙ CONFIG GLOBAL
 pyscan 192.168.0.1 --config 0.5 200 0
 
-🧠 COMBINAÇÕES
+🧠 COMBINAÇÕES E RELATÓRIOS HTML
 pyscan 192.168.0.1 -p 1-100 --mode fast
-sudo .venv/bin/pyscan/pyscan 192.168.0.0/24 --host icmp --mode stealth
+sudo .venv/bin/pyscan 192.168.0.0/24 --host icmp --mode stealth --html
+pyscan 192.168.0.1 -p "top 100" --html
         """,
     )
 
@@ -148,9 +150,16 @@ sudo .venv/bin/pyscan/pyscan 192.168.0.0/24 --host icmp --mode stealth
         help="Config global",
     )
 
+    parser.add_argument(
+        "--html",
+        action="store_true",
+        help="Gera um relatório HTML ao final (report.html)",
+    )
+
     parser.add_argument("--version", action="version", version="pyscan 1.0")
 
     args = parser.parse_args()
+    start_time_dt = datetime.now()
     start_time = time.time()
 
     config = resolve_config(args)
@@ -166,11 +175,7 @@ sudo .venv/bin/pyscan/pyscan 192.168.0.0/24 --host icmp --mode stealth
     if args.host:
         print("Host discovery iniciado...\n")
 
-        hd = HostDiscovery(
-            timeout=config.timeout,
-            threads=config.threads,
-            delay=config.delay,
-        )
+        hd = HostDiscovery(config=config)
 
         results = hd.discover(args.target, method=args.host)
         print_console(results)
@@ -186,9 +191,7 @@ sudo .venv/bin/pyscan/pyscan 192.168.0.0/24 --host icmp --mode stealth
 
         scanner = PortScanner(
             scan_type=args.scan_type,
-            threads=config.threads,
-            timeout=config.timeout,
-            delay=config.delay,
+            config=config,
         )
 
         ports = scanner.parse_ports(args.ports)
@@ -198,6 +201,16 @@ sudo .venv/bin/pyscan/pyscan 192.168.0.0/24 --host icmp --mode stealth
 
     end_time = time.time()
     print(f"\nTempo total: {end_time - start_time:.2f}s")
+
+    if args.html:
+        export_html_report(
+            results=results,
+            start_time=start_time_dt,
+            target=args.target,
+            mode=args.mode,
+            threads=config.threads,
+            timeout=config.timeout,
+        )
 
 
 if __name__ == "__main__":

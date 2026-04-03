@@ -1,4 +1,10 @@
+from datetime import datetime
+from typing import Union
 from pyscan.model.scan_result import HostDiscoveryResult, ScanResult
+from pyscan.model.html_report_metadata import HTMLReportMetadata
+from pyscan.model.html_report_host import HTMLReportHost
+from pyscan.model.html_report_port import HTMLReportPort
+from pyscan.core.html_response import HTMLReportGenerator
 
 
 def print_console(results):
@@ -54,3 +60,57 @@ def print_console(results):
         return
 
     raise TypeError("Tipo de resultado não suportado em print_console.")
+
+
+def export_html_report(
+    results: Union[ScanResult, HostDiscoveryResult],
+    start_time: datetime,
+    target: str,
+    mode: str,
+    threads: int,
+    timeout: float,
+):
+    """
+    Exporta os resultados para um arquivo HTML utilizando templates.
+    """
+    metadata = HTMLReportMetadata(
+        target=target,
+        mode=mode.upper() if mode else "CUSTOM",
+        threads=threads,
+        timeout=timeout,
+        start_time=start_time,
+        duration=results.duration,
+    )
+
+    html_hosts = []
+
+    if isinstance(results, ScanResult):
+        host = HTMLReportHost(address=results.host)
+        for r in results.results:
+            port = HTMLReportPort(
+                port=r.port,
+                protocol=r.protocol,
+                state=r.state,
+                service=r.service,
+                version=r.version,
+            )
+            host.add_port(port)
+        html_hosts.append(host)
+
+    elif isinstance(results, HostDiscoveryResult):
+        for r in results.results:
+            latency = (
+                f"{r.latency:.2f} ms" if isinstance(r.latency, (int, float)) else None
+            )
+            host = HTMLReportHost(
+                address=r.host,
+                status=r.status,
+                latency=latency,
+                mac=r.mac,
+            )
+            html_hosts.append(host)
+    else:
+        raise TypeError("Tipo de resultado não suportado para HTML.")
+
+    generator = HTMLReportGenerator(metadata=metadata, hosts=html_hosts)
+    generator.save("report.html")

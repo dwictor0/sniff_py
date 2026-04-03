@@ -4,3 +4,4 @@ pytest
 bandit
 scapy
 netifaces
+jinja2

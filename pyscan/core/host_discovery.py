@@ -212,18 +212,33 @@ class HostDiscovery:
     utilizando diferentes métodos (ICMP, TCP ou ARP).
     """
 
-    def __init__(self, timeout=2, threads=50, delay=0.0, tcp_port=80):
+    def __init__(
+        self,
+        timeout: float = 2.0,
+        threads: int = 50,
+        delay: float = 0.0,
+        tcp_port: int = 80,
+        config=None,
+    ):
         """
         Inicializa o mecanismo de descoberta.
 
         Args:
             timeout (int | float): Timeout padrão para scanners.
             threads (int): Número máximo de threads simultâneas.
+            delay (float): Delay entre probes.
             tcp_port (int): Porta padrão usada no método TCP.
+            config (ScanConfig): Configuração global opcional.
         """
-        self.timeout = timeout
-        self.threads = threads
-        self.delay = delay
+        if config:
+            self.timeout = config.timeout
+            self.threads = config.threads
+            self.delay = config.delay
+        else:
+            self.timeout = timeout
+            self.threads = threads
+            self.delay = delay
+
         self.tcp_port = tcp_port
         self.tcp_scanner = TcpScanner(timeout=self.timeout)
         self.icmp_scanner = IcmpScanner(timeout=self.timeout)

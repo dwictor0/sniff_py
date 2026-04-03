@@ -27,7 +27,7 @@ classifiers = [
     "Topic :: System :: Networking"
 ]
 
-dependencies = []
+dependencies = ["jinja2"]
 
 [project.scripts]
 pyscan = "pyscan.cli:main"

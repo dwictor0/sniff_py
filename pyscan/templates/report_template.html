@@ -81,6 +81,7 @@
     {% for host in hosts %}
     <div class="host">
         <h3>Host: {{ host.address }}</h3>
+        {% if host.ports %}
         <table>
             <tr>
                 <th>Port</th>
@@ -99,6 +100,20 @@
             </tr>
             {% endfor %}
         </table>
+        {% else %}
+        <table>
+            <tr>
+                <th>Status</th>
+                <th>Latency</th>
+                <th>MAC</th>
+            </tr>
+            <tr>
+                <td class="{{ host.status|lower if host.status else '' }}">{{ host.status or '-' }}</td>
+                <td>{{ host.latency or '-' }}</td>
+                <td>{{ host.mac or '-' }}</td>
+            </tr>
+        </table>
+        {% endif %}
     </div>
     {% endfor %}
 </body>
