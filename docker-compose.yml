@@ -1,0 +1,11 @@
+services:
+  pyscan:
+    build: .
+    cap_add:
+      - NET_RAW
+    network_mode: "host"
+    volumes:
+      - .:/app
+    stdin_open: true 
+    tty: true
+    command: /bin/bash
