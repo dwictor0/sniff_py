@@ -63,25 +63,25 @@ def main():
 EXEMPLOS COMPLETOS
 ==============================
 
-🔍 HOST DISCOVERY
+HOST DISCOVERY
 sudo .venv/bin/pyscan 192.168.0.0/24 --host icmp
 pyscan 192.168.0.1 --host tcp
 sudo .venv/bin/pyscan 192.168.0.0/24 --host arp
 
-⚡ PORT SCAN
+PORT SCAN
 pyscan 192.168.0.1 -p 80
 pyscan 192.168.0.1 -p 1-100
 pyscan 192.168.0.1 -p "top 10"
 
-🚀 MODOS
+MODOS
 pyscan 192.168.0.1 --mode fast
 pyscan 192.168.0.1 --mode full
 pyscan 192.168.0.1 --mode stealth
 
-⚙ CONFIG GLOBAL
+CONFIG GLOBAL
 pyscan 192.168.0.1 --config 0.5 200 0
 
-🧠 COMBINAÇÕES E RELATÓRIOS HTML
+COMBINAÇÕES E RELATÓRIOS HTML
 pyscan 192.168.0.1 -p 1-100 --mode fast
 sudo .venv/bin/pyscan 192.168.0.0/24 --host icmp --mode stealth --html
 pyscan 192.168.0.1 -p "top 100" --html
