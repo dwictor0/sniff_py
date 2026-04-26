@@ -1,8 +1,9 @@
 from typing import List
-from model.html_report_host import HTMLReportHost
-from model.html_report_metadata import HTMLReportMetadata
+from pyscan.model.html_report_host import HTMLReportHost
+from pyscan.model.html_report_metadata import HTMLReportMetadata
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import html
+import os
 
 
 class HTMLReportGenerator:
@@ -12,8 +13,11 @@ class HTMLReportGenerator:
         self.metadata = metadata
         self.hosts = hosts
         self._prepare_hosts()
+        template_dir = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "templates"
+        )
         self.env = Environment(
-            loader=FileSystemLoader("pyscan/templates"),
+            loader=FileSystemLoader(template_dir),
             autoescape=select_autoescape(["html", "xml"]),
         )
         self.template = self.env.get_template("report_template.html")
@@ -22,7 +26,16 @@ class HTMLReportGenerator:
         """Sanitiza e ordena portas de cada host"""
         for host in self.hosts:
             host.address = self.sanitize(host.address)
-            host.ports.sort(key=lambda p: (p.port, p.protocol))
+
+            if host.status:
+                host.status = self.sanitize(host.status)
+            if host.latency:
+                host.latency = self.sanitize(host.latency)
+            if host.mac:
+                host.mac = self.sanitize(host.mac)
+
+            if host.ports:
+                host.ports.sort(key=lambda p: (p.port, p.protocol))
             for port in host.ports:
                 port.protocol = self.sanitize(port.protocol)
                 port.state = self.sanitize(port.state)

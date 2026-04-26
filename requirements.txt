@@ -3,3 +3,5 @@ flake8-pyproject
 pytest
 bandit
 scapy
+netifaces
+jinja2

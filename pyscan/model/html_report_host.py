@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 from .html_report_port import HTMLReportPort
 
 
@@ -11,6 +11,9 @@ class HTMLReportHost:
 
     address: str
     ports: List[HTMLReportPort] = field(default_factory=list)
+    status: Optional[str] = None
+    latency: Optional[str] = None
+    mac: Optional[str] = None
 
     def add_port(self, port: HTMLReportPort) -> None:
         """Adiciona uma porta ao host.
