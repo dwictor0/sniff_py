@@ -1,9 +1,9 @@
 import ipaddress
 import logging
 import time
+import psutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import netifaces
 import scapy.all as scapy
 
 from pyscan.model.scan_result import HostDiscoveryResult, HostResult
@@ -135,12 +135,33 @@ class ArpScanner:
     """
 
     def __init__(self, timeout=1, iface=None):
+        """
+        Inicializa o scanner ARP usando psutil.
+        """
         self.timeout = timeout
+        
+        # Define a interface (Scapy pega a padrão se None)
         self.iface = iface or scapy.conf.iface
-        iface_name = self.iface.name if hasattr(self.iface, "name") else self.iface
-        self.local_ip = scapy.get_if_addr(iface_name)
-        netif = netifaces.ifaddresses(iface_name)
-        self.local_netmask = netif[netifaces.AF_INET][0]["netmask"]
+        iface_name = self.iface.name if hasattr(self.iface, "name") else str(self.iface)
+        
+        addrs = psutil.net_if_addrs()
+        
+        if iface_name not in addrs:
+            raise ValueError(f"Interface {iface_name} não encontrada.")
+            
+        # Busca IP e máscara na interface (Family 2 é AF_INET)
+        self.local_ip = None
+        self.local_netmask = None
+        
+        for addr in addrs[iface_name]:
+            if addr.family == 2:  # AF_INET (IPv4)
+                self.local_ip = addr.address
+                self.local_netmask = addr.netmask
+                break
+        
+        if not self.local_ip or not self.local_netmask:
+            raise ValueError(f"Não foi possível obter IP/Máscara da interface {iface_name}")
+            
         self.local_network = ipaddress.IPv4Network(
             f"{self.local_ip}/{self.local_netmask}",
             strict=False,
@@ -159,9 +180,8 @@ class ArpScanner:
 
             for ip in targets:
                 if ip not in self.local_network:
-                    raise ValueError(
-                        f"Host {ip} não pertence à rede local {self.local_network}"
-                    )
+                    # Opcional: remover este raise se quiser permitir scans fora da rede local
+                    raise ValueError(f"Host {ip} não pertence à rede local {self.local_network}")
 
             arp_request = scapy.ARP(pdst=host)
             broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
@@ -174,29 +194,20 @@ class ArpScanner:
                 verbose=False,
             )
 
-            if not answered:
-                return [
-                    {"host": str(ip), "status": "DOWN", "latency": None}
-                    for ip in targets
-                ]
-
             client_list = []
-
             for sent, received in answered:
                 latency = None
                 if hasattr(sent, "sent_time") and hasattr(received, "time"):
                     latency = round(1000 * (received.time - sent.sent_time), 2)
 
-                client_list.append(
-                    {
-                        "host": received.psrc,
-                        "status": "UP",
-                        "latency": latency,
-                        "mac": received.hwsrc,
-                    }
-                )
+                client_list.append({
+                    "host": received.psrc,
+                    "status": "UP",
+                    "latency": latency,
+                    "mac": received.hwsrc,
+                })
 
-            return client_list
+            return client_list if client_list else [{"host": host, "status": "DOWN", "latency": None}]
 
         except (PermissionError, OSError, ValueError) as exc:
             print(f"[ERRO ARP] {host}: {exc}")
