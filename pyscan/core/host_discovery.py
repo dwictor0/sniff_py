@@ -140,7 +140,6 @@ class ArpScanner:
         """
         self.timeout = timeout
         
-        # Define a interface (Scapy pega a padrão se None)
         self.iface = iface or scapy.conf.iface
         iface_name = self.iface.name if hasattr(self.iface, "name") else str(self.iface)
         
@@ -149,7 +148,6 @@ class ArpScanner:
         if iface_name not in addrs:
             raise ValueError(f"Interface {iface_name} não encontrada.")
             
-        # Busca IP e máscara na interface (Family 2 é AF_INET)
         self.local_ip = None
         self.local_netmask = None
         
@@ -180,7 +178,6 @@ class ArpScanner:
 
             for ip in targets:
                 if ip not in self.local_network:
-                    # Opcional: remover este raise se quiser permitir scans fora da rede local
                     raise ValueError(f"Host {ip} não pertence à rede local {self.local_network}")
 
             arp_request = scapy.ARP(pdst=host)
