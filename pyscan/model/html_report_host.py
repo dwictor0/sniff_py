@@ -21,3 +21,4 @@ class HTMLReportHost:
         Args:
             port (HTMLReportPort): _description_
         """
+        self.ports.append(port)
