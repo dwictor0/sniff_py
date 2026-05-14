@@ -1,4 +1,4 @@
-# scannerPython
+# sniff_py
 
 > Ferramenta de scanner de rede inspirada no Nmap para descoberta de hosts, análise de portas e identificação de serviços.
 > 
