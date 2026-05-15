@@ -122,7 +122,7 @@ O projeto possui suporte para execução local com `venv` e também via containe
 ## 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/scannerPython.git
+git clone https://github.com/seu-usuario/sniff_py.git
 cd scannerPython
 ```
 
@@ -205,7 +205,7 @@ docker --version
 ## 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/scannerPython.git
+git clone https://github.com/seu-usuario/sniff_py.git
 cd scannerPython
 ```
 
